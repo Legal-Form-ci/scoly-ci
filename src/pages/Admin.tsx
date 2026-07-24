@@ -26,8 +26,7 @@ import {
   FileText,
   Menu,
   UserPlus,
-  Zap,
-  Sparkles
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
