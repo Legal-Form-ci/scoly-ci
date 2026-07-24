@@ -64,7 +64,7 @@ import ProviderMonitoring from "@/components/admin/ProviderMonitoring";
 import ZonesManagement from "@/components/admin/ZonesManagement";
 import SchoolKitsManagement from "@/components/admin/SchoolKitsManagement";
 import SmartImage from "@/components/SmartImage";
-import ProductReclassifier from "@/components/admin/ProductReclassifier";
+
 import { sortCategories, getCategoryInitials } from "@/lib/categoryAssets";
 
 import { Share2 } from "lucide-react";
@@ -95,7 +95,7 @@ type TabType =
   | "flash_deals"
   | "zones"
   | "school_kits"
-  | "reclassify";
+  ;
 
 const Admin = () => {
   useLanguage();
@@ -299,7 +299,7 @@ const Admin = () => {
           {activeTab === "dashboard" && <AdminDashboard />}
           {activeTab === "stats" && <AdvancedStats />}
           {activeTab === "products" && <ProductsTab />}
-          {activeTab === "reclassify" && <ProductReclassifier />}
+          
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "orders" && <OrdersTab />}
           {activeTab === "payments" && <PaymentsTab />}
