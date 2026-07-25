@@ -76,6 +76,16 @@ serve(async (req) => {
       });
     }
 
+    const callerIsSuperAdmin = callerRoles.some((r: { role: string }) => r.role === 'super_admin');
+
+    // Only a super_admin may assign the super_admin role
+    if (Array.isArray(roles) && roles.includes('super_admin') && !callerIsSuperAdmin) {
+      return new Response(JSON.stringify({ error: 'Seul un super administrateur peut attribuer le rôle super_admin' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Check if user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email === email);
