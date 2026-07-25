@@ -79,14 +79,9 @@ const KitsEcole = () => {
   const [buying, setBuying] = useState<string | null>(null);
   const { addToCart } = useCart();
 
-  const shouldFetch = isPublic || !!school;
+  const shouldFetch = true;
 
   useEffect(() => {
-    if (!shouldFetch) {
-      setKits([]);
-      setLevel(null);
-      return;
-    }
     (async () => {
       setLoading(true);
       let q = supabase
@@ -101,6 +96,8 @@ const KitsEcole = () => {
         q = q.is("school_id", null);
       } else if (school) {
         q = q.eq("school_id", school.id);
+      } else {
+        q = q.not("school_id", "is", null);
       }
       const { data } = await q;
       const parsed: Kit[] = (data || []).map((k: any) => ({
@@ -124,10 +121,22 @@ const KitsEcole = () => {
         }, 100);
       }
     })();
-  }, [shouldFetch, isPublic, school, focusKitId]);
+  }, [isPublic, school, focusKitId]);
 
   const levels = useMemo(() => Array.from(new Set(kits.map((k) => k.grade_level))).sort(), [kits]);
   const visibleKits = useMemo(() => (level ? kits.filter((k) => k.grade_level === level) : kits), [kits, level]);
+
+  const groupedKits = useMemo(() => {
+    const groups = new Map<string, Kit[]>();
+    for (const k of visibleKits) {
+      const key = isPublic
+        ? (CATEGORY_LABELS[k.category || ""] || k.category || "Autres kits")
+        : (k.school_name || "Établissement");
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(k);
+    }
+    return Array.from(groups.entries());
+  }, [visibleKits, isPublic]);
 
   const computePrice = (kit: Kit) => {
     const sel = selected[kit.id] || new Set<string>();
@@ -230,13 +239,20 @@ const KitsEcole = () => {
             {!isPublic && (
               <div className="mt-6 max-w-2xl mx-auto space-y-3">
                 <label className="text-sm font-medium flex items-center gap-2">
-                  <Search className="h-4 w-4" /> Rechercher votre établissement
+                  <Search className="h-4 w-4" /> Filtrer par établissement (optionnel)
                 </label>
                 <SchoolCombobox
                   value={school?.id}
                   onChange={setSchool}
-                  placeholder="Entrez le nom de votre établissement ou votre code référent."
+                  placeholder="Tous les établissements — sélectionnez pour filtrer"
                 />
+                {school && (
+                  <div className="flex justify-center">
+                    <Button size="sm" variant="ghost" onClick={() => setSchool(null)}>
+                      Voir tous les établissements
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -255,13 +271,8 @@ const KitsEcole = () => {
           </div>
         </section>
 
-        <section className="container mx-auto px-4 py-8">
-          {!shouldFetch ? (
-            <div className="text-center text-muted-foreground py-16">
-              <Package className="mx-auto h-10 w-10 mb-3 opacity-40" />
-              <p>Sélectionnez votre établissement pour voir les kits.</p>
-            </div>
-          ) : loading ? (
+        <section className="container mx-auto px-4 py-8 space-y-10">
+          {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="h-64 w-full rounded-xl" />
@@ -269,11 +280,22 @@ const KitsEcole = () => {
             </div>
           ) : visibleKits.length === 0 ? (
             <div className="text-center text-muted-foreground py-16">
-              <p>{isPublic ? "Aucun kit scolaire disponible pour le moment." : "Aucun kit publié pour cet établissement."}</p>
+              <Package className="mx-auto h-10 w-10 mb-3 opacity-40" />
+              <p>{isPublic ? "Aucun kit scolaire disponible pour le moment." : "Aucun kit publié pour le moment."}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {visibleKits.map((kit) => {
+            groupedKits.map(([groupName, groupKits]) => (
+              <div key={groupName} className="space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h2 className="font-display text-lg md:text-xl font-bold tracking-tight">
+                    {groupName}
+                  </h2>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {groupKits.length} kit{groupKits.length > 1 ? "s" : ""}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {groupKits.map((kit) => {
                 const items = kit.items || [];
                 const optional = items.filter((i) => i.is_optional);
                 const mandatory = items.filter((i) => !i.is_optional);
@@ -372,9 +394,12 @@ const KitsEcole = () => {
                   </Card>
                 );
               })}
-            </div>
+                </div>
+              </div>
+            ))
           )}
         </section>
+
       </main>
       <Footer />
     </div>
