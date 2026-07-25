@@ -79,14 +79,9 @@ const KitsEcole = () => {
   const [buying, setBuying] = useState<string | null>(null);
   const { addToCart } = useCart();
 
-  const shouldFetch = isPublic || !!school;
+  const shouldFetch = true;
 
   useEffect(() => {
-    if (!shouldFetch) {
-      setKits([]);
-      setLevel(null);
-      return;
-    }
     (async () => {
       setLoading(true);
       let q = supabase
@@ -101,6 +96,8 @@ const KitsEcole = () => {
         q = q.is("school_id", null);
       } else if (school) {
         q = q.eq("school_id", school.id);
+      } else {
+        q = q.not("school_id", "is", null);
       }
       const { data } = await q;
       const parsed: Kit[] = (data || []).map((k: any) => ({
@@ -124,10 +121,22 @@ const KitsEcole = () => {
         }, 100);
       }
     })();
-  }, [shouldFetch, isPublic, school, focusKitId]);
+  }, [isPublic, school, focusKitId]);
 
   const levels = useMemo(() => Array.from(new Set(kits.map((k) => k.grade_level))).sort(), [kits]);
   const visibleKits = useMemo(() => (level ? kits.filter((k) => k.grade_level === level) : kits), [kits, level]);
+
+  const groupedKits = useMemo(() => {
+    const groups = new Map<string, Kit[]>();
+    for (const k of visibleKits) {
+      const key = isPublic
+        ? (CATEGORY_LABELS[k.category || ""] || k.category || "Autres kits")
+        : (k.school_name || "Établissement");
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(k);
+    }
+    return Array.from(groups.entries());
+  }, [visibleKits, isPublic]);
 
   const computePrice = (kit: Kit) => {
     const sel = selected[kit.id] || new Set<string>();
