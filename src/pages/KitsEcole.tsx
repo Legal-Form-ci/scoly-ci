@@ -157,29 +157,37 @@ const KitsEcole = () => {
     });
   };
 
-  const addKitItemsToCart = async (kit: Kit): Promise<number> => {
+  const addKitItemsToCart = async (kit: Kit): Promise<{ ok: number; total: number; missing: string[] }> => {
     const sel = selected[kit.id] || new Set<string>();
-    const chosen = (kit.items || []).filter(
-      (it) => (!it.is_optional || sel.has(it.id)) && it.product_id
-    );
+    const wanted = (kit.items || []).filter((it) => !it.is_optional || sel.has(it.id));
+    const missing: string[] = [];
     let ok = 0;
-    for (const it of chosen) {
+    for (const it of wanted) {
+      if (!it.product_id) {
+        missing.push(it.item_name);
+        continue;
+      }
       try {
-        await addToCart(it.product_id as string, it.quantity || 1);
+        await addToCart(it.product_id, it.quantity || 1);
         ok++;
       } catch {
-        // continue
+        missing.push(it.item_name);
       }
     }
-    return ok;
+    return { ok, total: wanted.length, missing };
   };
 
   const handleAddKit = async (kit: Kit) => {
     setBuying(kit.id);
-    const ok = await addKitItemsToCart(kit);
+    const { ok, total, missing } = await addKitItemsToCart(kit);
     setBuying(null);
-    if (ok > 0) toast.success(`Kit ajouté au panier (${ok} produit${ok > 1 ? "s" : ""}).`);
-    else toast.error("Ce kit ne contient aucun produit disponible.");
+    if (ok > 0) {
+      toast.success(
+        `Kit ajouté au panier — ${ok}/${total} article${ok > 1 ? "s" : ""}${missing.length ? ` (${missing.length} indisponible${missing.length > 1 ? "s" : ""})` : ""}.`,
+      );
+    } else {
+      toast.error("Aucun article de ce kit n'est encore lié au catalogue. Merci de contacter l'administrateur.");
+    }
   };
 
   const handleBuyNow = async (kit: Kit) => {
@@ -189,13 +197,17 @@ const KitsEcole = () => {
       return;
     }
     setBuying(kit.id);
-    const ok = await addKitItemsToCart(kit);
+    const { ok, total, missing } = await addKitItemsToCart(kit);
     setBuying(null);
     if (ok === 0) {
-      toast.error("Ce kit ne contient aucun produit disponible à l'achat.");
+      toast.error("Aucun article de ce kit n'est encore lié au catalogue. Merci de contacter l'administrateur.");
       return;
     }
-    toast.success("Redirection vers le paiement…");
+    if (missing.length) {
+      toast.info(`${ok}/${total} article(s) ajoutés — ${missing.length} indisponible(s).`);
+    } else {
+      toast.success("Redirection vers le paiement…");
+    }
     navigate("/checkout");
   };
 
