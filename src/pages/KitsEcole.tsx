@@ -394,9 +394,12 @@ const KitsEcole = () => {
                   </Card>
                 );
               })}
-            </div>
+                </div>
+              </div>
+            ))
           )}
         </section>
+
       </main>
       <Footer />
     </div>
