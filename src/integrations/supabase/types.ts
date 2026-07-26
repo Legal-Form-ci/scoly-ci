@@ -2418,6 +2418,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          kind: string
           name: string
           options: string | null
           product_id: string | null
@@ -2439,6 +2440,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          kind?: string
           name: string
           options?: string | null
           product_id?: string | null
@@ -2460,6 +2462,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          kind?: string
           name?: string
           options?: string | null
           product_id?: string | null
@@ -2906,42 +2909,51 @@ export type Database = {
       }
       schools_public: {
         Row: {
+          address: string | null
           city: string | null
           code: string | null
           created_at: string | null
           id: string | null
+          is_active: boolean | null
           is_verified: boolean | null
           logo_url: string | null
           name: string | null
           region: string | null
           student_count: number | null
           type: string | null
+          updated_at: string | null
           website: string | null
         }
         Insert: {
+          address?: string | null
           city?: string | null
           code?: string | null
           created_at?: string | null
           id?: string | null
+          is_active?: boolean | null
           is_verified?: boolean | null
           logo_url?: string | null
           name?: string | null
           region?: string | null
           student_count?: number | null
           type?: string | null
+          updated_at?: string | null
           website?: string | null
         }
         Update: {
+          address?: string | null
           city?: string | null
           code?: string | null
           created_at?: string | null
           id?: string | null
+          is_active?: boolean | null
           is_verified?: boolean | null
           logo_url?: string | null
           name?: string | null
           region?: string | null
           student_count?: number | null
           type?: string | null
+          updated_at?: string | null
           website?: string | null
         }
         Relationships: []
